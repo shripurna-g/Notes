@@ -1,0 +1,15 @@
+# Virtual environment
+.notesenv/
+
+# MkDocs build output
+site/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# OS
+.DS_Store
+Thumbs.db

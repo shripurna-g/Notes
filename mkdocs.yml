@@ -1,0 +1,8 @@
+site_name: Shripurna's Notes
+site_url: https://shripurna-g.github.io/Notes/
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
