@@ -6,3 +6,4 @@ theme:
 
 nav:
   - Home: index.md
+  - Cool Unrelated Resources: cool-unrelated-resources.md
