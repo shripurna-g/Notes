@@ -7,3 +7,6 @@ theme:
 nav:
   - Home: index.md
   - Cool Unrelated Resources: cool-unrelated-resources.md
+  - Things I Keep Seeing: things-i-keep-seeing.md
+  - Things I Explored: things-i-explored.md
+  - Claude: claude.md
