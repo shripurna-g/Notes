@@ -234,3 +234,89 @@ Three ways a loop ends:
 - Why: model on call 4 has no memory of decisions made on call 1, and every model switch invalidates the cache — you pay full token rate again from scratch
 - Affinity pin lasts 10 minutes by default; when the task changes, generate a new ID and routing starts fresh
 - Redis keeps the pin shared across services
+
+---
+
+### July 9, 2026
+
+#### Agent / Model Deployment Strategies
+
+- **Batch** — prioritises throughput over latency; large volumes processed together when latency isn't a concern (e.g. nightly scoring runs)
+- **Stream** — continuously processes data as it arrives (e.g. Kafka pipeline); no explicit request/response boundary
+- **Real-time** — model sits behind an API (REST or gRPC); a client sends a request and waits for a response. *Question: how is this different from stream?* — stream is push-based and stateless per event; real-time adds a synchronous request/response contract, load balancing, auth, rate limiting, versioning — the API layer is what makes it "real-time" as a service rather than a pipeline stage
+- **Edge** — model runs on device (phone, browser, embedded); no round-trip to a server; good for privacy and low-latency scenarios
+
+---
+
+### July 10, 2026
+
+#### Reinforcement Learning / LLM Training
+
+**Core loop**
+
+- state → action → reward → environment
+- Reward is the hard part — may need separate training on human preferences
+
+**Concepts spotted**
+
+- GRPO (Group Relative Policy Optimization) — DeepSeek's approach
+- GRPO loss calculator
+- Environment as the barrier still standing — frontier labs guard this as a proprietary asset
+
+**Othello env as a skeleton for RL**
+
+- *Question*: the LLM isn't supposed to play Othello directly — so are we converting whatever the LLM outputs into an Othello move, then labelling good move = good job, bad move = bad job? And doesn't that converter also need training?
+- Once you strip out the Othello specifics, the same `MultiTurnEnv` becomes a skeleton for any turn-based task
+- Minimax: opponent looks `depth=d` moves ahead and sets traps; randomness param controls how often it ignores strategy
+
+**Reward function (4 parts)**
+
+1. Win result
+2. Piece advantage
+3. Format compliance
+4. Invalid move penalty
+
+**Data generation**
+
+- Have your strongest model play a few hundred games and save the results
+- Filter to wins and draws before training — don't teach the model its strongest player's mistakes alongside its good format
+- *Question*: is this leakage prevention, or just quality filtering?
+
+---
+
+### July 11, 2026
+
+#### [A Crash Course on Building RAG Systems Part 1](https://www.dailydoseofds.com/a-crash-course-on-building-rag-systems-part-1-with-implementations/)
+
+**Why RAG?**
+
+- Need to look up new info without retraining the model
+- You could just stuff it in the prompt — but context window is the constraint
+- Vector DBs store unstructured embeddings; not just RAG — Google Photos probably uses one too
+
+**Tool stack spotted**
+
+- LlamaIndex
+- Qdrant — OSS alternative to Pinecone
+- Ollama
+- asyncio
+
+**ANN vs exact search**
+
+- Vector DBs use Approximate Nearest Neighbor (ANN) — trading perfect recall for speed at scale
+
+**Chunking strategies**
+
+- Fixed size
+- Semantic chunking — keep adding to a chunk until similarity score drops
+- Document structure based (headers, paragraphs)
+- LLM based
+
+- Bi-encoders for chunk → embedding generation (flagged as important)
+
+**RAG challenges**
+
+- *Lost in the middle*: LLMs don't perceive order as we do — documents in the middle of a retrieved list tend to get dismissed. Put important context at the beginning and end.
+- *Questions not semantically similar to answers*: embed the question and search for answers — but the question and the answer live in different embedding spaces
+    - Fix: **HyDE (Hypothetical Document Embeddings)** — use the LLM to generate a hypothetical answer, embed that, and use it to query the vector DB instead
+- *Chunk dilution*: large chunks contain multiple unrelated ideas, so similarity search returns irrelevant documents. Keep chunks to a few paragraphs max so each chunk has a single "concept"
