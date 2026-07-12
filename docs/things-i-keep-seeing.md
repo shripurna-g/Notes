@@ -320,3 +320,33 @@ Three ways a loop ends:
 - *Questions not semantically similar to answers*: embed the question and search for answers — but the question and the answer live in different embedding spaces
     - Fix: **HyDE (Hypothetical Document Embeddings)** — use the LLM to generate a hypothetical answer, embed that, and use it to query the vector DB instead
 - *Chunk dilution*: large chunks contain multiple unrelated ideas, so similarity search returns irrelevant documents. Keep chunks to a few paragraphs max so each chunk has a single "concept"
+
+---
+
+### July 12, 2026
+
+#### How LLM Routing Works in Prod
+
+**The savings trap**
+
+- Routing to a cheaper model doesn't automatically create savings
+- Why: each task involves multiple calls, and input grows at each stage due to accumulated context
+- Switching models mid-task throws away the KV cache — you pay full token rate again from scratch
+- A cache-hot expensive model can still cost less than a cache-cold cheap model
+
+**Prompt caching**
+
+- Already-seen input is ~90% cheaper
+- Static context (system prompt, instructions) vs dynamic context (grows with each turn)
+- KV cache stores the computed state of previously seen tokens
+
+**Model affinity / pinning**
+
+- Pin the model for the duration of a task to keep the cache hot
+- Stops switching mid-task and preserves accumulated context
+
+**Tools spotted**
+
+- Plano
+- ArchRouter
+- Static vs dynamic context as a routing consideration
